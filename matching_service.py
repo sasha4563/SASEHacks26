@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import json
 import math
 import re
-from dataclasses import dataclass, asdict
+import sys
 from datetime import datetime
 from typing import Any
 
@@ -260,7 +261,26 @@ def rank_matches(missing_person: dict[str, Any], candidates: list[dict[str, Any]
     return ranked
 
 
+def run_cli_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    missing_person = payload.get("missing_person") or payload.get("missingPerson")
+    candidates = payload.get("candidates") or payload.get("candidateRecords") or []
+
+    if not missing_person or not isinstance(candidates, list):
+        raise ValueError("Expected a payload with 'missing_person' and a list of 'candidates'.")
+
+    return {
+        "matches": rank_matches(missing_person, candidates),
+        "input_count": len(candidates),
+    }
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        raw_payload = sys.argv[1]
+        parsed = json.loads(raw_payload)
+        print(json.dumps(run_cli_payload(parsed), default=str))
+        raise SystemExit(0)
+
     example_missing = {
         "name": "Bikash Babu",
         "age": 40,
